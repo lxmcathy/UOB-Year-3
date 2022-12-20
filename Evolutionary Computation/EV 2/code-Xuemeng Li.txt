@@ -1,0 +1,425 @@
+Question 2
+Quetion2.m
+% load adjacency matrix
+ring = [0,1,0,0,0,1;1,0,1,0,0,0;0,1,0,1,0,0;0,0,1,0,1,0;0,0,0,1,0,1;1,0,0,0,1,0];
+ring_odd = [0,1,0,0,1;1,0,1,0,0;0,1,0,1,0;0,0,1,0,1;1,0,0,1,0];
+line = [0,1,0,0,0,0;1,0,1,0,0,0;0,1,0,1,0,0;0,0,1,0,1,0;0,0,0,1,0,1;0,0,0,0,1,0];
+star = [0,1,1,1,1,1;1,0,0,0,0,0;1,0,0,0,0,0;1,0,0,0,0,0;1,0,0,0,0,0;1,0,0,0,0,0];
+fullyConnected = [0,1,1,1,1,1;1,0,1,1,1,1;1,1,0,1,1,1;1,1,1,0,1,1;1,1,1,1,0,1;1,1,1,1,1,0]; 
+
+disp("Ring_even")
+PrintMetrics(ring);
+disp("Ring_odd")
+PrintMetrics(ring_odd);
+disp("Line")
+PrintMetrics(line);
+disp("Star")
+PrintMetrics(star);
+disp("Fully connected")
+PrintMetrics(fullyConnected);
+
+
+function PrintMetrics(adjacencyMatrix)
+    % create graph from adjacency matrix
+    G = graph(adjacencyMatrix);
+    figure
+    plot(G)
+    % do calculations using g
+    % raph
+    dims = size(adjacencyMatrix);
+    N = dims(1);
+    
+    pathLengthMatrix= zeros(N,N);
+    for i=1:N
+        for j=1:N
+            pathLengthMatrix(i,j) = length(shortestpath(G, i, j))-1;
+        end
+    end
+    
+    % average path length
+    lengthSum = sum(pathLengthMatrix, 'all');
+    averageLength = lengthSum/(N*(N-1));
+    % diameter
+    diameter = max(pathLengthMatrix, [], "all");
+    
+    % total number of links
+    numLinks = sum(pathLengthMatrix(:) == 1)/2;
+   
+    connection = conncomp(G);
+    disp("Connection status");
+    disp(connection);
+    disp("Total number of links");
+    disp(numLinks);
+    disp("Average length");
+    disp(averageLength)
+    disp("Diameter");
+    disp(diameter)
+end
+
+Quetion 3
+mutation_add.m
+function pos = mutation_add(G,seed)
+%load('ring.mat');
+m_size=length(G); %matrix size
+rng(seed);
+pos=G;  
+    while true
+        ran_i=0;
+        ran_j=0;
+        while true
+    
+            ran_i=randi(m_size);
+            ran_j=randi(m_size);
+            if ran_i ~= ran_j
+                break
+            end
+        end
+        %add
+        if pos(ran_i,ran_j)==0
+        pos(ran_i,ran_j)=1;
+        pos(ran_j,ran_i)=1;
+        break 
+        end
+        %conncted
+    end
+    pos 
+    %G = graph(pos);
+    %plot(G)
+    connection = conncomp(digraph(pos));
+    disp(connection);
+end
+
+mutation_remove.m
+function pos = mutation_remove(G,seed)
+m_size=length(G); %matrix size
+rng(seed);
+pos=G;  
+    while true
+        ran_i=0;
+        ran_j=0;
+        while true
+    
+            ran_i=randi(m_size);
+            ran_j=randi(m_size);
+            if ran_i ~= ran_j
+                break
+            end
+        end
+        %add
+        if pos(ran_i,ran_j)==1
+        pos(ran_i,ran_j)=0;
+        pos(ran_j,ran_i)=0;
+        break 
+        end
+        %conncted
+    end
+    pos 
+    %G = graph(pos);
+    %plot(G)
+    connection = conncomp(digraph(pos));
+    disp(connection);
+end
+
+Mutation_re.m
+function pos=Mutation_re(G,seed)
+
+pos = mutation_remove(mutation_add(G,seed),seed);
+
+connection = conncomp(digraph(pos));
+disp(connection);
+end
+
+Question 4
+simulated_annealing.m
+function f = simulated_annealing(N,seed,Pm1,Pm2,mute, MAX_ITER)
+if ~exist('mute', 'var')
+    % Whether to display various prompts
+    mute = 0; 
+end
+if ~exist('MAX_ITER', 'var')
+    MAX_ITER = 20; % Maximum number of interactions at a temperature
+end
+if ~exist('Pm1', 'var')
+    Pm1 = 0.3;% Mutation probability
+end
+if ~exist('Pm2', 'var')
+    Pm2 = 0.4;% Mutation probability
+end
+tic
+rng(seed);% Change this seed if u want other initialization
+T_r = exp(0:-0.01:-5); % temperature range factor
+
+solution =randi([0,1],[N,N]);% initialization
+for y = 1: N%Make the diagonal of the adjacency matrix 0
+        solution(y,y) = 0;
+end
+solution(:,:) = tril(solution(:,:),-1)+triu(solution(:,:)',0);
+while max(conncomp(graph(solution))) ~= 1
+        solution =mutation_add(solution,seed);
+end
+disp(solution)
+count = 0;
+fs = -Fitness(solution); % fitness of solution
+bestsolution = solution;% best solution
+f = -Fitness(bestsolution);% fitness of best solution
+P = generate_neighbors(solution,Pm1,Pm2,seed); % Generate the neighborhood P of the initial solution
+N = zeros(1,10000);
+ll = 0;
+
+G = graph(bestsolution);
+    dims = size(bestsolution);
+    N = dims(1);
+    
+    pathLengthMatrix= zeros(N,N);
+    for i=1:N
+        for j=1:N
+            pathLengthMatrix(i,j) = length(shortestpath(G, i, j))-1;
+        end
+    end
+    
+    % average path length
+    lengthSum = sum(pathLengthMatrix, 'all');
+    averageLength = lengthSum/(N*(N-1));
+    % diameter
+    diameter = max(pathLengthMatrix, [], "all");
+
+
+if ~mute
+disp('The initial is：');   
+plot(graph(solution));
+disp('The fitness is：');
+disp(-f);
+disp('f1 is');
+disp(averageLength);
+disp('f2 is');
+disp(diameter);
+end
+
+
+TMAX =500;% maximum temperature
+T_range = T_r * TMAX; % temperature range
+for t = T_range
+    for i = 1:MAX_ITER
+        count = count + 1;
+        ll = ll + 1;
+        % pick neighbor
+        f_neighbor = -Fitness(P);
+        N(ll) = f_neighbor;
+        Pt = exp(-(f_neighbor - fs)/t); % compute Pt
+        if Pt > rand || Pt >= 1
+            fs = f_neighbor;
+            solution = P;
+            P = generate_neighbors(solution,Pm1,Pm2,seed+count);
+        end
+        if f_neighbor < f
+            bestsolution = P;
+            f = f_neighbor;
+        end
+    end
+end
+toc
+if ~mute
+fprintf('The optimal solution obtained by the final search is：\n');
+disp(bestsolution);
+plot(graph(bestsolution))
+disp('The best fitness is：');
+disp(-f);
+disp('f1 is');
+disp(averageLength);
+disp('f2 is');
+disp(diameter);
+end
+
+function P = generate_neighbors(solution,Pm1, Pm2,seed)
+% This function generates the neighborhood of the solution according
+% mutation
+P = solution;
+n = length(P);
+rng(seed+1)
+        prob = rand;
+        if prob >= 1-Pm1 % do addlink
+            P = mutation_add(P,seed);
+        elseif (prob < 1 - Pm1 && prob >= 1-Pm1-Pm2 && sum(P,'all')/2 >= n) % do rmlink
+            P = mutation_remove(P,seed);
+        else % do rw
+            P = Mutation_re(P,seed);
+        end
+
+Fitness.m
+function f=Fitness(adjacencyMatrix)
+%f =  zeros(popSize,popSize);
+    G = graph(adjacencyMatrix);
+    dims = size(adjacencyMatrix);
+    N = dims(1);
+    
+    pathLengthMatrix= zeros(N,N);
+    for i=1:N
+        for j=1:N
+            pathLengthMatrix(i,j) = length(shortestpath(G, i, j))-1;
+        end
+    end
+    
+    % average path length
+    lengthSum = sum(pathLengthMatrix, 'all');
+    averageLength = lengthSum/(N*(N-1));
+    % diameter
+    diameter = max(pathLengthMatrix, [], "all");
+
+    
+    dis= diameter - averageLength;
+    
+    f = dis;
+
+end
+
+Question5
+Question5.m
+function f = Question5(N,seed,Pm1,Pm2,mute, MAX_ITER)
+if ~exist('mute', 'var')
+    % Whether to display various prompts
+    mute = 0; 
+end
+if ~exist('MAX_ITER', 'var')
+    MAX_ITER = 20; % Maximum number of interactions at a temperature
+end
+if ~exist('Pm1', 'var')
+    Pm1 = 0.3;% Mutation probability
+end
+if ~exist('Pm2', 'var')
+    Pm2 = 0.4;% Mutation probability
+end
+tic
+rng(seed);% Change this seed if u want other initialization
+T_r = exp(0:-0.01:-5); % temperature range factor
+
+solution =randi([0,1],[N,N]);% initialization
+for y = 1: N%Make the diagonal of the adjacency matrix 0
+        solution(y,y) = 0;
+end
+solution(:,:) = tril(solution(:,:),-1)+triu(solution(:,:)',0);
+while max(conncomp(graph(solution))) ~= 1
+        solution =mutation_add(solution,seed);
+end
+disp(solution)
+count = 0;
+fs = fitness_q5(solution); % fitness of solution
+bestsolution = solution;% best solution
+f = fitness_q5(bestsolution);% fitness of best solution
+P = generate_neighbors(solution,Pm1,Pm2,seed); % Generate the neighborhood P of the initial solution
+N = zeros(1,10000);
+ll = 0;
+
+G = graph(bestsolution);
+    dims = size(bestsolution);
+    N = dims(1);
+    
+    pathLengthMatrix= zeros(N,N);
+    for i=1:N
+        for j=1:N
+            pathLengthMatrix(i,j) = length(shortestpath(G, i, j))-1;
+        end
+    end
+    
+    % average path length
+    lengthSum = sum(pathLengthMatrix, 'all');
+    averageLength = lengthSum/(N*(N-1));
+    % diameter
+    diameter = max(pathLengthMatrix, [], "all");
+
+
+if ~mute
+disp('The initial is：');   
+plot(graph(solution));
+disp('The fitness is：');
+disp(f);
+disp('f1 is');
+disp(averageLength);
+disp('f2 is');
+disp(diameter);
+end
+
+
+TMAX =500;% maximum temperature
+T_range = T_r * TMAX; % temperature range
+for t = T_range
+    for i = 1:MAX_ITER
+        count = count + 1;
+        ll = ll + 1;
+        % pick neighbor
+        f_neighbor = fitness_q5(P);
+        N(ll) = f_neighbor;
+        Pt = exp(-(f_neighbor - fs)/t); % compute Pt
+        if Pt > rand || Pt >= 1
+            fs = f_neighbor;
+            solution = P;
+            P = generate_neighbors(solution,Pm1,Pm2,seed+count);
+        end
+        if f_neighbor < f
+            bestsolution = P;
+            f = f_neighbor;
+        end
+    end
+end
+toc
+if ~mute
+fprintf('The optimal solution obtained by the final search is：\n');
+disp(bestsolution);
+plot(graph(bestsolution))
+disp('The best fitness is：');
+disp(f);
+disp('f1 is');
+disp(averageLength);
+disp('f2 is');
+disp(diameter);
+end
+
+function P = generate_neighbors(solution,Pm1, Pm2,seed)
+% This function generates the neighborhood of the solution according
+% mutation
+P = solution;
+n = length(P);
+rng(seed+1)
+        prob = rand;
+        if prob >= 1-Pm1 % do addlink
+            P = mutation_add(P,seed);
+        elseif (prob < 1 - Pm1 && prob >= 1-Pm1-Pm2 && sum(P,'all')/2 >= n) % do rmlink
+            P = mutation_remove(P,seed);
+        else % do rw
+            P = Mutation_re(P,seed);
+        end
+
+fitness_q5.m
+function f_w=fitness_q5(adjacencyMatrix)
+%f =  zeros(popSize,popSize);
+     G = graph(adjacencyMatrix);
+    dims = size(adjacencyMatrix);
+    N = dims(1);
+    
+    pathLengthMatrix= zeros(N,N);
+    for i=1:N
+        for j=1:N
+            pathLengthMatrix(i,j) = length(shortestpath(G, i, j))-1;
+        end
+    end
+    
+    % average path length
+    lengthSum = sum(pathLengthMatrix, 'all');
+    averageLength = lengthSum/(N*(N-1));
+    % diameter
+    diameter = max(pathLengthMatrix, [], "all");    
+    %dis= diameter - averageLength;
+    % total number of links
+    numLinks = sum(pathLengthMatrix(:) == 1)/2;
+
+    %a1f1 + a2f2 + a3f3 =: fw
+    w1 = [0.6 0.2 0.2];
+    w2 = [0.2 0.6 0.2];
+    w3 = [0.2 0.2 0.6];
+
+    f_w1= averageLength*w1(1)' + diameter*w1(2)' + numLinks*w1(3)';
+    f_w2= averageLength*w2(1)' + diameter*w2(2)' + numLinks*w2(3)';
+    f_w3= averageLength*w3(1)' + diameter*w3(2)' + numLinks*w3(3)';
+
+    f_w = f_w1; %change to f_w1, f_w2, f_w3
+
+end

@@ -1,0 +1,17 @@
+%mutation 
+function snnew=mutation_q4(G,p)  
+  
+bn=size(G,2);  
+snnew=G;  
+  
+pmm=pro(p);  %Decide whether to perform mutation or not，1:true，0:false    
+if pmm==1  
+    
+   c1=mod(randi([65535]),10);  %Generate a random mutation bit in the range [1,bn-1]  
+   c2=mod(randi([65535]),10);  
+   chb1=min(c1,c2);  
+   chb2=max(c1,c2);  
+   x=G(chb1+1:chb2);  
+   snnew(chb1+1:chb2)=fliplr(x);  
+end  
+end  
